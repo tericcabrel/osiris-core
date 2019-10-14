@@ -1,12 +1,46 @@
 package com.tericcabrel;
 
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import opencard.core.service.CardServiceException;
+import opencard.core.terminal.CardTerminalException;
+import opencard.core.util.OpenCardPropertyLoadingException;
+
 import javax.smartcardio.*;
 import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 public class Main {
     public static void main(String[] args) {
+        // Connection to RabbitMQ
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        factory.setPort(5672);
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+
         try {
+            Connection connection = factory.newConnection();
+            System.out.println(" Connected successfully to RabbitMQ Server");
+
+            Channel channel = connection.createChannel();
+
+            /*channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            String message = "Hello World!";
+            channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
+            System.out.println(" [x] Sent '" + message + "'");*/
+        }catch (TimeoutException | IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        // Initialize card Service
+        new CardService();
+
+        /*try {
             TerminalFactory terminalFactory = TerminalFactory.getDefault();
             List<CardTerminal> cardTerminals = terminalFactory.terminals().list();
             if (cardTerminals.isEmpty()) {
@@ -45,34 +79,6 @@ public class Main {
             }
         } catch (CardException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }
-
-/*
-* try {
-			// show the list of available terminals
-			TerminalFactory factory = TerminalFactory.getDefault();
-			List<CardTerminal> terminals = factory.terminals().list();
-			// get the first terminal
-			if (terminals.isEmpty()) {
-				System.out.println("No terminals found!");
-			} else {
-				System.out.println("Terminals: " + terminals);
-				CardTerminal terminal = terminals.get(0);
-				// establish a connection with the card
-				// Card card = terminal.connect("T=1");
-				Card card = terminal.connect("DIRECT");
-				System.out.println("card: " + card);
-				byte[] ccidResp = card.transmitControlCommand(
-						CM_IOCTL_GET_FEATURE_REQUEST, new byte[] {});
-				System.out.println(HexString.bufferToHex(ccidResp));
-				CardChannel channel = card.getBasicChannel();
-//				channel.transmit(new CommandAPDU(new byte[]{0,1,2,3,4,5,6}));
-				// disconnect
-				card.disconnect(false);
-			}
-		} catch (Exception e) {
-			System.err.println(e.getLocalizedMessage());
-		}
-* */
