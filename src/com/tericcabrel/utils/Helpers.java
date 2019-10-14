@@ -1,10 +1,10 @@
-package com.tericcabrel;
+package com.tericcabrel.utils;
 
 /**
  *
  * @author ZEGEEK
  */
-public class Utils {
+public class Helpers {
     public static String byteArrayToString(byte[] byteArray) {
         StringBuffer hexStringBuffer = new StringBuffer();
         for (int i = 0; i < byteArray.length; i++) {

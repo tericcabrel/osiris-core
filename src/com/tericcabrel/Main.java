@@ -3,17 +3,20 @@ package com.tericcabrel;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import opencard.core.service.CardServiceException;
-import opencard.core.terminal.CardTerminalException;
-import opencard.core.util.OpenCardPropertyLoadingException;
+import com.tericcabrel.utils.CardHelper;
 
 import javax.smartcardio.*;
 import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 
 public class Main {
+    private static Card card= null;
+
     public static void main(String[] args) {
         // Connection to RabbitMQ
         ConnectionFactory factory = new ConnectionFactory();
@@ -37,48 +40,19 @@ public class Main {
             System.exit(-1);
         }
 
-        // Initialize card Service
-        new CardService();
+        new Timer().scheduleAtFixedRate(new TimerTask(){
+            @Override
+            public void run(){
+                Card newCard = CardHelper.getCard();
 
-        /*try {
-            TerminalFactory terminalFactory = TerminalFactory.getDefault();
-            List<CardTerminal> cardTerminals = terminalFactory.terminals().list();
-            if (cardTerminals.isEmpty()) {
-                System.out.println("Skipping the test: no card terminals available");
-                return;
+                if (card == null && newCard != null) {
+                    card = newCard;
+                    System.out.println("Card inserted");
+                } else if (card != null && newCard == null){
+                    card = null;
+                    System.out.println("Card removed");
+                }
             }
-
-            System.out.println("Terminals: " + cardTerminals);
-
-            CardTerminal cardTerminal = cardTerminals.get(0);
-            Card card = null;
-
-            boolean present = cardTerminal.isCardPresent();
-
-            if (present) {
-                card = cardTerminal.connect("T=1");
-
-                System.out.println("card: " + card);
-                CardChannel channel = card.getBasicChannel();
-
-                // Send Select Applet command
-                byte[] aid = { (byte) 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x00 };
-                ResponseAPDU answer = channel.transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x00, aid));
-                System.out.println("answer: " + answer.toString());
-
-
-                ResponseAPDU res = channel.transmit(new CommandAPDU(0x3A, 0x00, 0x00, 0x00));
-                String hex = DatatypeConverter.printHexBinary(res.getBytes());
-                System.out.println("RES SW: " + res.getSW1());
-                System.out.println("Response: " + res.getData().length);
-                System.out.println("Data: " + Utils.byteArrayToString(res.getData()));
-
-                card.disconnect(true);
-            } else {
-                System.out.println("The card is not present!");
-            }
-        } catch (CardException e) {
-            e.printStackTrace();
-        }*/
+        },0,1000);
     }
 }
