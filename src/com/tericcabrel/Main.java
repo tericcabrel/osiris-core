@@ -6,8 +6,6 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.tericcabrel.utils.CardHelper;
 
 import javax.smartcardio.*;
-import javax.xml.bind.DatatypeConverter;
-import java.util.List;
 
 import java.io.IOException;
 import java.util.Timer;
