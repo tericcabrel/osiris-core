@@ -46,8 +46,8 @@ public class Messaging {
     public static String Q_VERIFY_USER_REQUEST = "Q_VERIFY_REQUEST";
     public static String Q_VERIFY_USER_RESPONSE = "Q_VERIFY_RESPONSE";
 
-    public static String Q_MATCH_MATCH_FINGERPRINT_REQUEST = "Q_VERIFY_REQUEST";
-    public static String Q_MATCH_FINGERPRINT_RESPONSE = "Q_VERIFY_RESPONSE";
+    public static String Q_MATCH_FINGERPRINT_REQUEST = "Q_MATCH_FINGERPRINT_REQUEST";
+    public static String Q_MATCH_FINGERPRINT_RESPONSE = "Q_MATCH_FINGERPRINT_RESPONSE";
 
     public static void sendToQueue(Channel channel, String queueName, String message) {
         try {

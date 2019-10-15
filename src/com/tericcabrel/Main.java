@@ -146,7 +146,7 @@ public class Main {
             DeliverCallback deliverCallback10 = (consumerTag, delivery) -> {
                 String info = OsirisCardService.getData();
                 String[] array = info.split(OsirisCardService.DATA_DELIMITER);
-                Messaging.sendToQueue(channel, Messaging.Q_MATCH_MATCH_FINGERPRINT_REQUEST, array.length > 0 ? array[0] : "");
+                Messaging.sendToQueue(channel, Messaging.Q_MATCH_FINGERPRINT_REQUEST, array.length > 0 ? array[0] : "");
             };
             channel.basicConsume(Messaging.Q_VERIFY_USER_REQUEST, true, deliverCallback10, consumerTag -> { });
 

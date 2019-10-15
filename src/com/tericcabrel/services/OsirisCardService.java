@@ -36,17 +36,10 @@ public class OsirisCardService {
     // Signal the PIN validation is required for an action
     private final static String SW_PIN_VERIFICATION_REQUIRED = "25345";
 
-    private final HashMap<String, String> ERROR_MAPS = new HashMap<String, String>();
-
     private static Card card;
     private static int pinRemaining = 3;
     private static boolean appletSelected = false;
     private static boolean isAuthenticated = false;
-
-    OsirisCardService() {
-        ERROR_MAPS.put(SW_VERIFICATION_FAILED, "Authentication failed");
-        ERROR_MAPS.put(SW_PIN_VERIFICATION_REQUIRED, "Authentication is required");
-    }
 
     public static String selectApplet() {
         // Send Select Applet command
