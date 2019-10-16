@@ -63,7 +63,7 @@ public class OsirisCardService {
         try {
             byte[] data = Helpers.numberStringToByteArray(pinCode);
 
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_PIN_AUTH, 0x00, 0x00, data));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_PIN_AUTH, 0x00, 0x00, data));
 
             if (String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
                 isAuthenticated = true;
@@ -80,7 +80,7 @@ public class OsirisCardService {
 
     public static String getData() {
         try {
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_GET_DATA, 0x00, 0x00));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_GET_DATA, 0x00, 0x00));
             if (String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
                 return Helpers.byteArrayToString(response.getData());
             }
@@ -95,9 +95,9 @@ public class OsirisCardService {
 
     public static String setData(String data) {
         try {
-            byte[] params = Helpers.numberStringToByteArray(data);
+            byte[] params = data.getBytes();
 
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_SET_DATA, 0x00, 0x00, params));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_SET_DATA, 0x00, 0x00, params));
 
             return String.valueOf(response.getSW());
         } catch (CardException e) {
@@ -109,9 +109,9 @@ public class OsirisCardService {
 
     public static String setName(String data) {
         try {
-            byte[] params = Helpers.numberStringToByteArray(data);
+            byte[] params = data.getBytes();
 
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_SET_NAME, 0x00, 0x00, params));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_SET_NAME, 0x00, 0x00, params));
 
             return String.valueOf(response.getSW());
         } catch (CardException e) {
@@ -123,9 +123,9 @@ public class OsirisCardService {
 
     public static String setBirthDate(String data) {
         try {
-            byte[] params = Helpers.numberStringToByteArray(data);
+            byte[] params = data.getBytes();
 
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_SET_BIRTH_DATE, 0x00, 0x00, params));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_SET_BIRTH_DATE, 0x00, 0x00, params));
 
             return String.valueOf(response.getSW());
         } catch (CardException e) {
@@ -137,7 +137,7 @@ public class OsirisCardService {
 
     public static String resetData() {
         try {
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_RESET_DATA, 0x00, 0x00));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_RESET_DATA, 0x00, 0x00));
 
             return String.valueOf(response.getSW());
         } catch (CardException e) {
@@ -149,7 +149,7 @@ public class OsirisCardService {
 
     public static String unblock() {
         try {
-            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, INS_PIN_UNBLOCK, 0x00, 0x00));
+            ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_PIN_UNBLOCK, 0x00, 0x00));
 
             return String.valueOf(response.getSW());
         } catch (CardException e) {
@@ -182,7 +182,7 @@ public class OsirisCardService {
     }
 
     public void setPinRemaining(int pinRemaining) {
-        this.pinRemaining = pinRemaining;
+        OsirisCardService.pinRemaining = pinRemaining;
     }
 
     public boolean isAppletSelected() {
@@ -190,7 +190,7 @@ public class OsirisCardService {
     }
 
     public void setAppletSelected(boolean appletSelected) {
-        appletSelected = appletSelected;
+        OsirisCardService.appletSelected = appletSelected;
     }
 
     public boolean isAuthenticated() {
