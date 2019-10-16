@@ -11,5 +11,6 @@
     <orderEntry type="library" name="amqp-client-5.7.3" level="project" />
     <orderEntry type="library" name="slf4j-api-1.7.9" level="project" />
     <orderEntry type="library" name="slf4j-simple-1.7.9" level="project" />
+    <orderEntry type="library" name="commons-codec-1.11" level="project" />
   </component>
 </module>

@@ -6,6 +6,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import com.tericcabrel.services.OsirisCardService;
 import com.tericcabrel.utils.CardHelper;
+import com.tericcabrel.utils.Helpers;
 import com.tericcabrel.utils.Messaging;
 
 import javax.smartcardio.*;
@@ -128,35 +129,28 @@ public class Main {
 
             channel.queueDeclare(Messaging.Q_ENROLL_REQUEST, false, false, false, null);
             DeliverCallback deliverCallback8 = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8); // Received the uid
                 System.out.println(" [x] Received '" + message + "'"); // contains user's uid
-                Messaging.sendToQueue(channel, Messaging.Q_GET_FINGERPRINT_REQUEST, message);
-            };
-            channel.basicConsume(Messaging.Q_ENROLL_REQUEST, true, deliverCallback8, consumerTag -> { });
 
-            channel.queueDeclare(Messaging.Q_GET_FINGERPRINT_RESPONSE, false, false, false, null);
-            DeliverCallback deliverCallback9 = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                System.out.println(" [x] Received '" + message + "'"); // contains value indicate if enrollment succeeded
+                String folderPath = "D:\\CardOsirisCore\\fingerprint";
+                String fingerprintName = folderPath + "\\" + message + ".png";
+
+                // TODO Get fingerprint
+
+                // Upload the fingerprint to the server
+                Helpers.uploadFingerprint(folderPath);
+
                 Messaging.sendToQueue(channel, Messaging.Q_ENROLL_RESPONSE, message);
             };
-            channel.basicConsume(Messaging.Q_GET_FINGERPRINT_RESPONSE, true, deliverCallback9, consumerTag -> { });
+            channel.basicConsume(Messaging.Q_ENROLL_REQUEST, true, deliverCallback8, consumerTag -> { });
 
             channel.queueDeclare(Messaging.Q_VERIFY_USER_REQUEST, false, false, false, null);
             DeliverCallback deliverCallback10 = (consumerTag, delivery) -> {
                 String info = OsirisCardService.getData();
                 String[] array = info.split(OsirisCardService.DATA_DELIMITER);
-                Messaging.sendToQueue(channel, Messaging.Q_MATCH_FINGERPRINT_REQUEST, array.length > 0 ? array[0] : "");
+                Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, array.length > 0 ? array[0] : "");
             };
             channel.basicConsume(Messaging.Q_VERIFY_USER_REQUEST, true, deliverCallback10, consumerTag -> { });
-
-            channel.queueDeclare(Messaging.Q_MATCH_FINGERPRINT_RESPONSE, false, false, false, null);
-            DeliverCallback deliverCallback11 = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                System.out.println(" [x] Received '" + message + "'"); // contains value indicate if verification succeeded
-                Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, message);
-            };
-            channel.basicConsume(Messaging.Q_MATCH_FINGERPRINT_RESPONSE, true, deliverCallback11, consumerTag -> { });
         } catch (IOException e) {
             e.printStackTrace();
         }
