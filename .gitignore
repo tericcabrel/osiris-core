@@ -28,5 +28,5 @@
 hs_err_pid*
 out
 .idea
-fingerprint
+data
 # End of https://www.gitignore.io/api/java

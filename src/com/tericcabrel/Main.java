@@ -4,6 +4,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
+import com.tericcabrel.fingerprint.FingerPrint;
+import com.tericcabrel.fingerprint.FingerprintScanner;
 import com.tericcabrel.services.OsirisCardService;
 import com.tericcabrel.utils.CardHelper;
 import com.tericcabrel.utils.Helpers;
@@ -13,6 +15,7 @@ import javax.smartcardio.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
@@ -132,15 +135,45 @@ public class Main {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8); // Received the uid
                 System.out.println(" [x] Received '" + message + "'"); // contains user's uid
 
-                String folderPath = "D:\\CardOsirisCore\\fingerprint";
-                String fingerprintName = folderPath + "\\" + message + ".png";
+                String folderPath = "D:\\Card\\OsirisCore\\data";
 
-                // TODO Get fingerprint
+                // Get fingerprint
+                FingerPrint fp = new FingerPrint(folderPath, message);
+                String response = "12000";
 
-                // Upload the fingerprint to the server
-                Helpers.uploadFingerprint(folderPath);
+                if (fp.isSdkInitialized()) {
+                    List<FingerprintScanner> scanners = fp.getScanners();
+                    if (scanners.size() > 0) {
+                        fp.setParameters(0);
 
-                Messaging.sendToQueue(channel, Messaging.Q_ENROLL_RESPONSE, message);
+                        fp.captureSingle();
+
+                        if (fp.isFingerCaptured()) {
+                            fp.saveImage();
+
+                            boolean b = fp.enroll(false);
+                            if (b)  {
+                                // TODO Write fingerPrint template in the card
+                                response = "12500";
+
+                                // Upload the fingerprint to the server
+                                String res = Helpers.uploadFingerprint(folderPath + "\\" + message + ".png");
+
+                                if (!res.equals("RES200")) {
+                                    response = "12400";
+                                }
+                            }
+                        } else {
+                            response = "12300";
+                        }
+                    } else {
+                        response = "12200";
+                    }
+                } else {
+                    response = "12100";
+                }
+
+                Messaging.sendToQueue(channel, Messaging.Q_ENROLL_RESPONSE, response);
             };
             channel.basicConsume(Messaging.Q_ENROLL_REQUEST, true, deliverCallback8, consumerTag -> { });
 

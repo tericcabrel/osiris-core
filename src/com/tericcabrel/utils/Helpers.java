@@ -55,11 +55,11 @@ public class Helpers {
         try {
             HttpResponse response = httpClient.execute(post);
 
-            return "RES200";
+            return "12200";
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return "RES500";
+        return "12400";
     }
 }
