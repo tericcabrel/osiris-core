@@ -225,6 +225,8 @@ public class FingerPrint {
     public boolean verify(byte[] firstTemplate, byte[] secondTemplate) {
         int[] refVerify = new int[1];
 
+        sdk.UFM_Create(matcher);
+
         int result = sdk.UFM_Verify(matcher[0], firstTemplate, firstTemplate.length, secondTemplate, secondTemplate.length, refVerify);//byte[][]
 
         if (result == 0) {
