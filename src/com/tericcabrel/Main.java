@@ -151,13 +151,17 @@ public class Main {
                         if (fp.isFingerCaptured()) {
                             fp.saveImage();
 
-                            boolean b = fp.enroll(false);
+                            boolean b = fp.enroll(true);
                             if (b)  {
                                 // TODO Write fingerPrint template in the card
                                 response = "12500";
 
                                 // Upload the fingerprint to the server
-                                String res = Helpers.uploadFingerprint(folderPath + "\\" + message + ".png");
+                                String res = Helpers.uploadFingerprint(
+                                        message,
+                                        folderPath + "\\" + message + ".dat",
+                                        folderPath + "\\" + message + ".png"
+                                );
 
                                 if (!res.equals("RES200")) {
                                     response = "12400";

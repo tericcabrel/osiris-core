@@ -13,7 +13,7 @@ public class FingerPrint {
     private String outputPath;
     private String filename;
 
-    private boolean sdkInitialized = false;
+    private static boolean sdkInitialized = false;
     private boolean fingerCaptured = false;
     private long[] matcher = new long[1];
     private byte[] currentTemplate;
@@ -28,11 +28,13 @@ public class FingerPrint {
     }
 
     private void initialize() {
-        int result = sdk.UFS_Init();
+        if (!sdkInitialized) {
+            int result = sdk.UFS_Init();
 
-        if (result == 0) {
-            result = sdk.UFM_Create(matcher);
-            sdkInitialized = true;
+            if (result == 0) {
+                result = sdk.UFM_Create(matcher);
+                sdkInitialized = true;
+            }
         }
     }
 

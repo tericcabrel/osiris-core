@@ -42,8 +42,9 @@ public class OsirisCardService {
     private static boolean isAuthenticated = false;
 
     public static String selectApplet() {
+        // The applet is the default on the card so it's not needed to selected
         // Send Select Applet command
-        try {
+        /* try {
             ResponseAPDU response = card.getBasicChannel().transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x00, APPLET_AID));
 
             if (String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
@@ -56,7 +57,8 @@ public class OsirisCardService {
             e.printStackTrace();
         }
 
-        return SW_INTERNAL_ERROR;
+        return SW_INTERNAL_ERROR;*/
+        return SW_APPLET_SELECTED;
     }
 
     public static String authenticate(String pinCode) {

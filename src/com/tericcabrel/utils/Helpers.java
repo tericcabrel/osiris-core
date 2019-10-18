@@ -2,11 +2,14 @@ package com.tericcabrel.utils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 
 import java.io.File;
@@ -40,26 +43,34 @@ public class Helpers {
         return bytes;
     }
 
-    public static String uploadFingerprint(String filePath) {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+    public static String uploadFingerprint(String uid, String fingerprintPath, String picturePath) {
+        File fingerFile = new File(fingerprintPath);
+        File pictureFile = new File(picturePath);
+
+        FileBody fingerBody = new FileBody(fingerFile, ContentType.DEFAULT_BINARY);
+        FileBody pictureBody = new FileBody(pictureFile, ContentType.DEFAULT_BINARY);
 
         HttpPost post = new HttpPost("http://localhost:7000/api/fingerprints");
-        File file = new File(filePath);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-        builder.addBinaryBody("file", file, ContentType.DEFAULT_BINARY, filePath);
-        // builder.addTextBody("text", "message", ContentType.DEFAULT_BINARY);
+        System.out.println(fingerprintPath);
+        System.out.println(picturePath);
+        builder.addPart("fingerprint", fingerBody);
+        builder.addPart("picture", pictureBody);
+        builder.addTextBody("uid", uid, ContentType.DEFAULT_BINARY);
 //
         HttpEntity entity = builder.build();
         post.setEntity(entity);
-        try {
-            HttpResponse response = httpClient.execute(post);
 
-            return "12200";
+        HttpClient client = HttpClientBuilder.create().build();
+        try {
+            client.execute(post);
+
+            return "RES200";
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return "12400";
+        return "RES400";
     }
 }
