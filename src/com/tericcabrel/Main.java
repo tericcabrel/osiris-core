@@ -184,8 +184,47 @@ public class Main {
             channel.queueDeclare(Messaging.Q_VERIFY_USER_REQUEST, false, false, false, null);
             DeliverCallback deliverCallback10 = (consumerTag, delivery) -> {
                 String info = OsirisCardService.getData();
+                System.out.println(info);
+
                 String[] array = info.split(OsirisCardService.DATA_DELIMITER);
-                Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, array.length > 0 ? array[0] : "");
+
+                System.out.println(array.length);
+                if (array.length != 4) {
+                    Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, info);
+                    return;
+                }
+
+                String response = info;
+                String templatePath = "D:\\Card\\OsirisCore\\data\\" + array[0] + ".dat";
+                System.out.println(templatePath);
+
+                FingerPrint fp = new FingerPrint("D:\\Card\\OsirisCore\\data", array[0]);
+                if (fp.isSdkInitialized()) {
+                    List<FingerprintScanner> scanners = fp.getScanners();
+                    if (scanners.size() > 0) {
+                        fp.setParameters(0);
+
+                        fp.captureSingle();
+
+                        if (fp.isFingerCaptured()) {
+                            boolean b = fp.enroll(false);
+                            if (b)  {
+                                boolean res = fp.verify(templatePath, fp.getCurrentTemplate());
+                                if (!res) {
+                                    response = "17900";
+                                }
+                            }
+                        } else {
+                            response = "12300";
+                        }
+                    } else {
+                        response = "12200";
+                    }
+                } else {
+                    response = "12100";
+                }
+
+                Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, response);
             };
             channel.basicConsume(Messaging.Q_VERIFY_USER_REQUEST, true, deliverCallback10, consumerTag -> { });
         } catch (IOException e) {

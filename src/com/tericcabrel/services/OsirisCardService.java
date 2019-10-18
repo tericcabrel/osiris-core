@@ -18,7 +18,7 @@ public class OsirisCardService {
     private final static byte INS_PIN_AUTH = (byte) 0x05;
     private final static byte INS_PIN_UNBLOCK = (byte) 0x06;
 
-    public static final String DATA_DELIMITER = "|";
+    public static final String DATA_DELIMITER = "\\|";
 
     // Signal that there is no error
     public final static String SW_SUCCESS_RESPONSE = "36864";
