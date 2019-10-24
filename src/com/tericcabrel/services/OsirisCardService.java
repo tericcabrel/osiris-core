@@ -17,6 +17,8 @@ public class OsirisCardService {
     private static final byte INS_RESET_DATA = 0x04;
     private final static byte INS_PIN_AUTH = (byte) 0x05;
     private final static byte INS_PIN_UNBLOCK = (byte) 0x06;
+    private final static byte INS_SET_FINGERPRINT = (byte) 0x07;
+    private final static byte INS_GET_FINGERPRINT = (byte) 0x08;
 
     public static final String DATA_DELIMITER = "\\|";
 
@@ -159,6 +161,93 @@ public class OsirisCardService {
         }
 
         return SW_INTERNAL_ERROR;
+    }
+
+    public static String setFingerprint(byte[] fingerPrintTemplate) {
+        byte[] Data = new byte[100];
+
+        int fingerLength = fingerPrintTemplate.length;
+        double round = Math.floor((double)fingerLength / 100);
+        int lastPart = fingerLength % 100;
+
+        try {
+            byte[] lengthToByte = Helpers.prepareNumberForApdu(fingerLength);
+            CommandAPDU cmd = new CommandAPDU(CLA_OSIRIS, INS_SET_FINGERPRINT, 0x00, 0x00, lengthToByte);
+            ResponseAPDU response = card.getBasicChannel().transmit(cmd);
+
+            if (!String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
+                return String.valueOf(response.getSW());
+            }
+
+            boolean allPartSend = true;
+            for (int i = 0; i < round; i++) {
+                // Array copy: (src, offset, target, offset, copy size)
+                System.arraycopy(fingerPrintTemplate, (i * 100), Data, 0, 100);
+                // System.out.println("Data Length: " + Data.length);
+
+                cmd = new CommandAPDU(CLA_OSIRIS, INS_SET_FINGERPRINT, (byte) i, 0x64, Data);
+                response = card.getBasicChannel().transmit(cmd);
+
+                if (!String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
+                    allPartSend = false;
+                    System.out.println("["+i+"] An error occurred with status: " + response.getSW());
+                    break;
+                }
+            }
+
+            if(allPartSend) {
+                byte[] finalPart = new byte[lastPart];
+                System.arraycopy(fingerPrintTemplate, (int) (round * 100), finalPart, 0, lastPart);
+
+                cmd = new CommandAPDU(CLA_OSIRIS, INS_SET_FINGERPRINT, (byte) round, (byte) lastPart, finalPart);
+                response = card.getBasicChannel().transmit(cmd);
+
+                return String.valueOf(response.getSW());
+            }
+
+            return String.valueOf(response.getSW());
+        } catch (CardException e) {
+            e.printStackTrace();
+        }
+
+        return "15000";
+    }
+
+    public static byte[] getFingerpint(int length) {
+        byte[] result = new byte[length];
+        double round = Math.floor((double)length / 100);
+        int last = length % 100;
+        ResponseAPDU response;
+        boolean allGet = true;
+
+        try {
+            for (int i = 0; i < round; i++) {
+                response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_GET_FINGERPRINT, (byte) i, 0x64));
+                if (!String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
+                    System.out.println("An error occurred with status: " + response.getSW());
+                    allGet = false;
+                    break;
+                } else {
+                    // Array copy: (src, offset, target, offset, copy size)
+                    System.arraycopy(response.getData(), 0, result, (i * 100), response.getData().length);
+                }
+            }
+
+            if (allGet) {
+                response = card.getBasicChannel().transmit(new CommandAPDU(CLA_OSIRIS, INS_GET_FINGERPRINT, (byte) round, (byte) last));
+                if (!String.valueOf(response.getSW()).equals(SW_SUCCESS_RESPONSE)) {
+                    System.out.println("An error occurred with status: " + response.getSW());
+                } else {
+                    //array copy: (src, offset, target, offset, copy size)
+                    System.arraycopy(response.getData(), 0, result, (int) (round * 100), response.getData().length);
+                }
+            } else {
+                System.out.println("Fail to get all the part");
+            }
+        } catch (CardException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public static void disconnect() {

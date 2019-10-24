@@ -44,22 +44,27 @@ public class Main {
         new Timer().scheduleAtFixedRate(new TimerTask(){
             @Override
             public void run() {
-                Card newCard = CardHelper.getCard();
+                try {
+                    Card newCard = CardHelper.getCard();
 
-                if (OsirisCardService.getCard() == null && newCard != null) {
-                    System.out.println("Card inserted");
+                    if (OsirisCardService.getCard() == null && newCard != null) {
+                        System.out.println("Card inserted");
 
-                    OsirisCardService.setCard(newCard);
+                        OsirisCardService.setCard(newCard);
 
-                    String message = OsirisCardService.selectApplet();
+                        String message = OsirisCardService.selectApplet();
 
-                    Messaging.sendToQueue(channel, Messaging.Q_APPLET_SELECTED_RESPONSE, message);
-                } else if (OsirisCardService.getCard() != null && newCard == null) {
-                    System.out.println("Card removed");
+                        Messaging.sendToQueue(channel, Messaging.Q_APPLET_SELECTED_RESPONSE, message);
+                    } else if (OsirisCardService.getCard() != null && newCard == null) {
+                        System.out.println("Card removed");
 
-                    OsirisCardService.setCard(null);
+                        OsirisCardService.setCard(null);
 
-                    Messaging.sendToQueue(channel, Messaging.Q_CARD_REMOVED_RESPONSE, OsirisCardService.SW_CARD_REMOVED);
+                        Messaging.sendToQueue(channel, Messaging.Q_CARD_REMOVED_RESPONSE, OsirisCardService.SW_CARD_REMOVED);
+                    }
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                    // TODO Stop the timer and notify that the service is down
                 }
             }
         },0,1000);
@@ -153,7 +158,9 @@ public class Main {
 
                             boolean b = fp.enroll(true);
                             if (b)  {
-                                // TODO Write fingerPrint template in the card
+                                // Write fingerPrint template in the card
+                                OsirisCardService.setFingerprint(fp.getCurrentTemplate());
+
                                 response = "12500";
 
                                 // Upload the fingerprint to the server
@@ -198,6 +205,8 @@ public class Main {
                 String templatePath = "D:\\Card\\OsirisCore\\data\\" + array[0] + ".dat";
                 System.out.println(templatePath);
 
+                byte[] storedFingerprint = OsirisCardService.getFingerpint(Integer.valueOf(array[array.length - 1]));
+
                 FingerPrint fp = new FingerPrint("D:\\Card\\OsirisCore\\data", array[0]);
                 if (fp.isSdkInitialized()) {
                     List<FingerprintScanner> scanners = fp.getScanners();
@@ -209,7 +218,7 @@ public class Main {
                         if (fp.isFingerCaptured()) {
                             boolean b = fp.enroll(false);
                             if (b)  {
-                                boolean res = fp.verify(templatePath, fp.getCurrentTemplate());
+                                boolean res = fp.verify(storedFingerprint, fp.getCurrentTemplate());
                                 if (!res) {
                                     response = "17900";
                                 }
