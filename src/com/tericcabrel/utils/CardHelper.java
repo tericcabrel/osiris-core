@@ -20,15 +20,16 @@ public class CardHelper {
             cardTerminals = terminalFactory.terminals().list();
 
             if (cardTerminals.isEmpty()) {
-                // System.out.println("Skipping the test: no card terminals available");
+                System.out.println("No card terminals available");
                 return null;
             }
 
-            // System.out.println("Terminals: " + cardTerminals);
+            System.out.println("Terminals: " + cardTerminals);
             CardTerminal cardTerminal = cardTerminals.get(0);
 
             if (cardTerminal.isCardPresent()) {
                 card = cardTerminal.connect("T=1");
+                // System.out.println(card);
             }
         } catch (CardException e) {
             e.printStackTrace();
