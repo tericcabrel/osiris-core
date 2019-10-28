@@ -43,10 +43,27 @@ public class Messaging {
     public static String Q_VERIFY_USER_REQUEST = "Q_VERIFY_REQUEST";
     public static String Q_VERIFY_USER_RESPONSE = "Q_VERIFY_RESPONSE";
 
+    public static String Q_CAPTURE_REQUEST = "Q_CAPTURE_REQUEST";
+    public static String Q_CAPTURE_RESPONSE = "Q_CAPTURE_RESPONSE";
+
+    public static String Q_PERFORM_VERIFY_REQUEST = "Q_PERFORM_VERIFY_REQUEST";
+    public static String Q_PERFORM_VERIFY_RESPONSE = "Q_PERFORM_VERIFY_RESPONSE";
+
+
     public static void sendToQueue(Channel channel, String queueName, String message) {
         try {
             channel.queueDeclare(queueName, false, false, false, null);
             channel.basicPublish("", queueName, null, message.getBytes(StandardCharsets.UTF_8));
+            System.out.println(" [x] Sent to queue " + queueName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendToQueue(Channel channel, String queueName, byte[] data) {
+        try {
+            channel.queueDeclare(queueName, false, false, false, null);
+            channel.basicPublish("", queueName, null, data);
             System.out.println(" [x] Sent to queue " + queueName);
         } catch (IOException e) {
             e.printStackTrace();

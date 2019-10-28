@@ -22,6 +22,9 @@ import java.util.concurrent.TimeoutException;
 
 public class Main {
     private static Channel channel;
+    private static String picturePath = "D:\\Card\\Data";
+    private static String templatePath = "D:\\Card\\Data\\template";
+    private static String tempUid = null;
 
     public static void main(String[] args) {
         // Connection to RabbitMQ
@@ -139,57 +142,47 @@ public class Main {
             DeliverCallback deliverCallback8 = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8); // Received the uid
                 System.out.println(" [x] Received '" + message + "'"); // contains user's uid
+                tempUid = message;
 
-                String folderPath = "D:\\Card\\OsirisCore\\data";
+                Messaging.sendToQueue(channel, Messaging.Q_CAPTURE_REQUEST, message);
+            };
+            channel.basicConsume(Messaging.Q_ENROLL_REQUEST, true, deliverCallback8, consumerTag -> { });
 
-                // Get fingerprint
-                FingerPrint fp = new FingerPrint(folderPath, message);
-                String response = "12000";
+            channel.queueDeclare(Messaging.Q_CAPTURE_RESPONSE, false, false, false, null);
+            DeliverCallback deliverCallback10 = (consumerTag, delivery) -> {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8); // Received the uid
+                System.out.println(" [x] Received '" + message + "'"); // contains user's uid
 
-                if (fp.isSdkInitialized()) {
-                    List<FingerprintScanner> scanners = fp.getScanners();
-                    if (scanners.size() > 0) {
-                        fp.setParameters(0);
+                String response = "12500";
+                String templateFile = templatePath + "\\" + tempUid + ".tmpl";
 
-                        fp.captureSingle();
+                if (message.equals("SUCCESS")) {
+                    // Write fingerPrint template in the card
+                    OsirisCardService.setFingerprint(Helpers.fileToByteArray(templateFile));
 
-                        if (fp.isFingerCaptured()) {
-                            fp.saveImage();
+                    // Upload the fingerprint to the server
+                    String res = Helpers.uploadFingerprint(
+                            tempUid,
+                            templateFile,
+                            picturePath + "\\" + tempUid + ".bmp"
+                    );
 
-                            boolean b = fp.enroll(true);
-                            if (b)  {
-                                // Write fingerPrint template in the card
-                                OsirisCardService.setFingerprint(fp.getCurrentTemplate());
-
-                                response = "12500";
-
-                                // Upload the fingerprint to the server
-                                String res = Helpers.uploadFingerprint(
-                                        message,
-                                        folderPath + "\\" + message + ".dat",
-                                        folderPath + "\\" + message + ".png"
-                                );
-
-                                if (!res.equals("RES200")) {
-                                    response = "12400";
-                                }
-                            }
-                        } else {
-                            response = "12300";
-                        }
-                    } else {
-                        response = "12200";
+                    if (!res.equals("RES200")) {
+                        response = "12400";
                     }
+
+                    // TODO delete files
+                    tempUid = null;
                 } else {
-                    response = "12100";
+                    response = "12000";
                 }
 
                 Messaging.sendToQueue(channel, Messaging.Q_ENROLL_RESPONSE, response);
             };
-            channel.basicConsume(Messaging.Q_ENROLL_REQUEST, true, deliverCallback8, consumerTag -> { });
+            channel.basicConsume(Messaging.Q_CAPTURE_RESPONSE, true, deliverCallback10, consumerTag -> { });
 
             channel.queueDeclare(Messaging.Q_VERIFY_USER_REQUEST, false, false, false, null);
-            DeliverCallback deliverCallback10 = (consumerTag, delivery) -> {
+            DeliverCallback deliverCallback11 = (consumerTag, delivery) -> {
                 String info = OsirisCardService.getData();
                 System.out.println(info);
 
@@ -201,41 +194,27 @@ public class Main {
                     return;
                 }
 
-                String response = info;
-                String templatePath = "D:\\Card\\OsirisCore\\data\\" + array[0] + ".dat";
-                System.out.println(templatePath);
+                // String templateFile = templatePath + "\\" + array[0] + ".tmpl";
+                // System.out.println(templateFile);
 
-                byte[] storedFingerprint = OsirisCardService.getFingerpint(Integer.valueOf(array[array.length - 1]));
+                byte[] storedFingerprint = OsirisCardService.getFingerpint(Integer.parseInt(array[array.length - 1]));
 
-                FingerPrint fp = new FingerPrint("D:\\Card\\OsirisCore\\data", array[0]);
-                if (fp.isSdkInitialized()) {
-                    List<FingerprintScanner> scanners = fp.getScanners();
-                    if (scanners.size() > 0) {
-                        fp.setParameters(0);
+                Messaging.sendToQueue(channel, Messaging.Q_PERFORM_VERIFY_REQUEST, storedFingerprint);
+            };
+            channel.basicConsume(Messaging.Q_VERIFY_USER_REQUEST, true, deliverCallback11, consumerTag -> { });
 
-                        fp.captureSingle();
+            channel.queueDeclare(Messaging.Q_PERFORM_VERIFY_RESPONSE, false, false, false, null);
+            DeliverCallback deliverCallback12 = (consumerTag, delivery) -> {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8); // Received the uid
+                System.out.println(" [x] Received '" + message + "'"); // contains user's uid
+                String response = message;
 
-                        if (fp.isFingerCaptured()) {
-                            boolean b = fp.enroll(false);
-                            if (b)  {
-                                boolean res = fp.verify(storedFingerprint, fp.getCurrentTemplate());
-                                if (!res) {
-                                    response = "17900";
-                                }
-                            }
-                        } else {
-                            response = "12300";
-                        }
-                    } else {
-                        response = "12200";
-                    }
-                } else {
-                    response = "12100";
+                if (message.equals("SUCCESS")) {
+                    response = OsirisCardService.getData();
                 }
-
                 Messaging.sendToQueue(channel, Messaging.Q_VERIFY_USER_RESPONSE, response);
             };
-            channel.basicConsume(Messaging.Q_VERIFY_USER_REQUEST, true, deliverCallback10, consumerTag -> { });
+            channel.basicConsume(Messaging.Q_PERFORM_VERIFY_RESPONSE, true, deliverCallback12, consumerTag -> { });
         } catch (IOException e) {
             e.printStackTrace();
         }

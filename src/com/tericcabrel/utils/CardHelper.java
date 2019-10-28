@@ -24,7 +24,7 @@ public class CardHelper {
                 return null;
             }
 
-            System.out.println("Terminals: " + cardTerminals);
+            // System.out.println("Terminals: " + cardTerminals);
             CardTerminal cardTerminal = cardTerminals.get(0);
 
             if (cardTerminal.isCardPresent()) {

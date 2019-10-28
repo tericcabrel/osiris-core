@@ -12,7 +12,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -101,5 +103,26 @@ public class Helpers {
         }
 
         return "RES400";
+    }
+
+    public static byte[] fileToByteArray(String filePath) {
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(filePath);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int readCount = 0;
+
+            while ((readCount = fis.read(buffer)) != -1){
+                baos.write(buffer, 0, readCount);
+            }
+
+            return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new byte[] { };
     }
 }
